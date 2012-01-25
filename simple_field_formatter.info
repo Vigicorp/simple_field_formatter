@@ -1,1 +1,5 @@
+; $Id.
 name = Simple Field Formatter
+description = Simple Field Display Formatter
+core = 7.x
+files[] = simple_field_formatter.module
