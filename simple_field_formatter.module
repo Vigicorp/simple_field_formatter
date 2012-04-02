@@ -85,12 +85,22 @@ function simple_field_formatter_field_formatter_settings_form($field, $instance,
   );
 	$element['custom_str_replace_find'] = array(
     '#type'           => 'textfield',                        // Use a textbox
+    '#states' => array('visible' =>
+				array(':input[name=custom_preg_replace]' =>
+						array('checked' => TRUE),
+				)
+		),
     '#title'          => t('Find'),                      // Widget label
     '#description'    => t('Specifies the value to find.'),  // helper text
     '#default_value'  => $settings['custom_str_replace_find'],               // Get the value if it's already been set
   );
 	$element['custom_str_replace_replace'] = array(
     '#type'           => 'textfield',                        // Use a textbox
+    '#states' => array('visible' =>
+				array(':input[name=custom_preg_replace]' =>
+						array('checked' => TRUE),
+				)
+		),
     '#title'          => t('Replace'),                      // Widget label
     '#description'    => t('Specifies the value to replace the value in find'),  // helper text
     '#default_value'  => $settings['custom_str_replace_replace'],               // Get the value if it's already been set
