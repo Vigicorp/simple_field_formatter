@@ -81,37 +81,36 @@ function simple_field_formatter_field_attach_view_alter(&$output, $context) {
  	  $instance = field_info_instance($element['#entity_type'], $field_name, $element['#bundle']);
  	  $display = isset($instance['display'][$context['view_mode']]) ? $instance['display'][$context['view_mode']] : $instance['display']['default'];
  	  $settings = $display['settings'];
-
- 	  $custom_prefix = $settings['custom_prefix'];
- 	  $custom_suffix = $settings['custom_suffix'];
-
- 	  $custom_reverse = $settings['custom_reverse'];
- 	  $custom_trim = $settings['custom_trim'];
- 	  $custom_strtolower = $settings['custom_strtolower'];
- 	  $custom_strtoupper = $settings['custom_strtoupper'];
- 	  $custom_ucfirst = $settings['custom_ucfirst'];
- 	  
+ 	  if (!empty($settings)) {
+ 	    $custom_prefix = $settings['custom_prefix'];
+ 	    $custom_suffix = $settings['custom_suffix'];
+ 	    $custom_reverse = $settings['custom_reverse'];
+ 	    $custom_trim = $settings['custom_trim'];
+ 	    $custom_strtolower = $settings['custom_strtolower'];
+ 	    $custom_strtoupper = $settings['custom_strtoupper'];
+ 	    $custom_ucfirst = $settings['custom_ucfirst'];
+ 	  }
  	  foreach ($element['#items'] as $delta => $item) {
-        if(isset($item['safe_value'])){
-          $original_value = $item['safe_value']; // Getting the actual value
-     	    if($custom_reverse){
-     	      $original_value = strrev($original_value);
-     	    }
-     	    if($custom_trim){
-     	      $original_value = trim($original_value);
-     	    }
-     	    if($custom_strtolower){
-     	      $original_value = strtolower($original_value);
-     	    }
-     	    if($custom_strtoupper){
-     	      $original_value = strtoupper($original_value);
-     	    }
-     	    if($custom_ucfirst){
-     	      $original_value = ucfirst($original_value);
-     	    }
-     	    $modified_value = $original_value; 
-            $element[$delta]['#markup'] = $modified_value;
-        }
+ 	    if(isset($item['safe_value'])){
+ 	      $original_value = $item['safe_value']; // Getting the actual value
+ 	      if($custom_reverse){
+ 	        $original_value = strrev($original_value);
+ 	      }
+ 	      if($custom_trim){
+ 	        $original_value = trim($original_value);
+ 	      }
+ 	      if($custom_strtolower){
+ 	        $original_value = strtolower($original_value);
+ 	      }
+ 	      if($custom_strtoupper){
+ 	        $original_value = strtoupper($original_value);
+ 	      }
+ 	      if($custom_ucfirst){
+ 	        $original_value = ucfirst($original_value);
+ 	      }
+ 	      $modified_value = $original_value;
+ 	      $element[$delta]['#markup'] = $modified_value;
+ 	    }
  	    if (!empty($custom_suffix)) {
  	      $element[$delta]['#suffix'] = $custom_suffix;
  	    }
