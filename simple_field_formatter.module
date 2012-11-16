@@ -93,23 +93,25 @@ function simple_field_formatter_field_attach_view_alter(&$output, $context) {
  	  foreach ($element['#items'] as $delta => $item) {
  	    if(isset($item['safe_value'])){
  	      $original_value = $item['safe_value']; // Getting the actual value
+ 	      $modified_value = $original_value;
  	      if($custom_reverse){
- 	        $original_value = strrev($original_value);
+ 	        $modified_value = strrev($modified_value);
  	      }
  	      if($custom_trim){
- 	        $original_value = trim($original_value);
+ 	        $modified_value = trim($modified_value);
  	      }
  	      if($custom_strtolower){
- 	        $original_value = strtolower($original_value);
+ 	        $modified_value = strtolower($modified_value);
  	      }
  	      if($custom_strtoupper){
- 	        $original_value = strtoupper($original_value);
+ 	        $modified_value = strtoupper($modified_value);
  	      }
  	      if($custom_ucfirst){
- 	        $original_value = ucfirst($original_value);
+ 	        $modified_value = ucfirst($modified_value);
  	      }
- 	      $modified_value = $original_value;
- 	      $element[$delta]['#markup'] = $modified_value;
+ 	      if($modified_value != $original_value){
+ 	        $element[$delta]['#markup'] = $modified_value;
+ 	      }
  	    }
  	    if (!empty($custom_suffix)) {
  	      $element[$delta]['#suffix'] = $custom_suffix;
