@@ -7,6 +7,7 @@ function simple_field_formatter_field_formatter_info_alter(&$info) {
   // added to ALL formatters...
   foreach ($info as $formatter_key => &$formatter) {
     $formatter['settings'] += array(
+      'custom_link_to_node' => '',
       'custom_prefix' => '', //give a default value for when the form is first loaded
       'custom_suffix' => '', //ditto
       'custom_reverse' => '',
@@ -27,7 +28,8 @@ function simple_field_formatter_field_formatter_settings_summary_alter(&$summary
   $settings = $display['settings'];
   //watchdog('custom-test',print_r($settings,TRUE));
   if (!empty($settings)) {
-    $summary = t('<strong>Prefix:</strong> @custom_prefix <br/> <strong>Suffix:</strong> @custom_suffix<br/> <strong>Reverse:</strong> @custom_reverse<br/> <strong>Trim:</strong> @custom_trim<br/> <strong>strtolower:</strong> @custom_strtolower<br/> <strong>strtoupper:</strong> @custom_strtoupper<br/> <strong>ucfirst:</strong> @custom_ucfirst', array(
+    $summary = t('<strong>Link to Entity:</strong> @custom_link_to_node <br/> <strong>Prefix:</strong> @custom_prefix <br/> <strong>Suffix:</strong> @custom_suffix<br/> <strong>Reverse:</strong> @custom_reverse<br/> <strong>Trim:</strong> @custom_trim<br/> <strong>strtolower:</strong> @custom_strtolower<br/> <strong>strtoupper:</strong> @custom_strtoupper<br/> <strong>ucfirst:</strong> @custom_ucfirst', array(
+      '@custom_link_to_node'     => $settings['custom_link_to_node'],
       '@custom_prefix'     => $settings['custom_prefix'],
       '@custom_suffix'  => $settings['custom_suffix'],
   		'@custom_reverse'  => $settings['custom_reverse'],
@@ -73,15 +75,14 @@ function simple_field_formatter_formatter_info($field_name, $entity_type, $bundl
  *
  */
 function simple_field_formatter_field_attach_view_alter(&$output, $context) {
-
  	foreach (element_children($output) as $field_name) {
-
  	  $element = &$output[$field_name];
  	  //watchdog('formatter',print_r($element,TRUE));
  	  $instance = field_info_instance($element['#entity_type'], $field_name, $element['#bundle']);
  	  $display = isset($instance['display'][$context['view_mode']]) ? $instance['display'][$context['view_mode']] : $instance['display']['default'];
  	  $settings = $display['settings'];
  	  if (!empty($settings)) {
+ 	    $custom_link_to_node = $settings['custom_link_to_node'];
  	    $custom_prefix = $settings['custom_prefix'];
  	    $custom_suffix = $settings['custom_suffix'];
  	    $custom_reverse = $settings['custom_reverse'];
@@ -109,6 +110,11 @@ function simple_field_formatter_field_attach_view_alter(&$output, $context) {
  	      if($custom_ucfirst){
  	        $modified_value = ucfirst($modified_value);
  	      }
+ 	      if($custom_link_to_node && ($context['entity_type'] == 'node')){
+ 	        $entity_id = $context['entity']->nid;
+ 	        $path = drupal_get_path_alias("node/$entity_id");
+ 	        $modified_value = '<a href="/'.$path.'">'.$modified_value.'</a>';
+ 	      }
  	      if($modified_value != $original_value){
  	        $element[$delta]['#markup'] = $modified_value;
  	      }
@@ -129,6 +135,13 @@ function simple_field_formatter_field_formatter_settings_form_alter(&$settings_f
 
   $display = $context['instance']['display'][$context['view_mode']];
   $settings = $display['settings'];
+
+  $settings_form['custom_link_to_node'] = array(
+    '#title' => t('Link this field to the original piece of content'),
+    '#description' => t("Enable to override and Link to the original piece of content"),
+    '#type' => 'checkbox',
+    '#default_value' => $settings['custom_link_to_node'],               // Get the value if it's already been set
+  );
 
   $settings_form['custom_prefix'] = array(
     '#type'           => 'textfield',                        // Use a textbox
