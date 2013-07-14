@@ -1,7 +1,0 @@
-; $Id.
-name = Simple Field Formatter
-description = Simple Field Display Formatter
-core = 8.x
-package = Fields
-dependencies[] = field
-files[] = simple_field_formatter.module
