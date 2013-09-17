@@ -31,15 +31,15 @@ function simple_field_formatter_field_formatter_settings_summary_alter(&$summary
   //watchdog('custom-test',print_r($settings,TRUE));
   if (!empty($settings)) {
     $summary = t('<strong>Link to Entity:</strong> @custom_link_to_entity <br/> <strong>Prefix:</strong> @custom_prefix <br/> <strong>Suffix:</strong> @custom_suffix<br/> <strong>Reverse:</strong> @custom_reverse<br/> <strong>Trim:</strong> @custom_trim<br/> <strong>strtolower:</strong> @custom_strtolower<br/> <strong>strtoupper:</strong> @custom_strtoupper<br/> <strong>ucfirst:</strong> @custom_ucfirst<br/> <strong>StripTags:</strong> @custom_strip_tags', array(
-      '@custom_link_to_entity' => $settings['custom_link_to_entity'],
-      '@custom_prefix' => $settings['custom_prefix'],
-      '@custom_suffix' => $settings['custom_suffix'],
-      '@custom_reverse' => $settings['custom_reverse'],
-      '@custom_trim' => $settings['custom_trim'],
-      '@custom_strtolower' => $settings['custom_strtolower'],
-      '@custom_strtoupper' => $settings['custom_strtoupper'],
-      '@custom_ucfirst' => $settings['custom_ucfirst'],
-      '@custom_strip_tags' => $settings['custom_strip_tags'],
+        '@custom_link_to_entity'     => isset($settings['custom_link_to_entity']) ? $settings['custom_link_to_entity'] : '',
+        '@custom_prefix'     => isset($settings['custom_prefix']) ? $settings['custom_prefix'] : '',
+        '@custom_suffix'  => isset($settings['custom_suffix']) ? $settings['custom_suffix'] : '',
+        '@custom_reverse'  => isset($settings['custom_reverse']) ? $settings['custom_reverse'] : '',
+        '@custom_trim'  => isset($settings['custom_trim']) ? $settings['custom_trim'] : '',
+        '@custom_strtolower'  => isset($settings['custom_strtolower']) ? $settings['custom_strtolower'] : '',
+        '@custom_strtoupper'  => isset($settings['custom_strtoupper']) ? $settings['custom_strtoupper'] : '',
+        '@custom_ucfirst'  => isset($settings['custom_ucfirst']) ? $settings['custom_ucfirst'] : '',
+        '@custom_strip_tags'  => isset($settings['custom_strip_tags']) ? $settings['custom_strip_tags'] : '',
         )); // we use t() for translation and placeholders to guard against attacks
   }
   else {
