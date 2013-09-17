@@ -127,10 +127,10 @@ function simple_field_formatter_field_attach_view_alter(&$output, $context) {
             $modified_value = trim($modified_value);
           }
           if ($custom_strtolower) {
-            $modified_value = strtolower($modified_value);
+            $modified_value = mb_strtolower($modified_value, 'UTF-8');
           }
           if ($custom_strtoupper) {
-            $modified_value = strtoupper($modified_value);
+            $modified_value = mb_strtoupper($modified_value, 'UTF-8');
           }
           if ($custom_ucfirst) {
             $modified_value = ucfirst($modified_value);
