@@ -79,7 +79,7 @@ function simple_field_formatter_formatter_info($field_name, $entity_type, $bundl
  *
  */
 function simple_field_formatter_field_attach_view_alter(&$output, $context) {
-  if (!isset($context['display']['settings']) || empty($context['display']['settings'])) {
+  if (!isset($context['display']['settings']) || !is_array($context['display']['settings'])) {
     return;
   }
   else {
