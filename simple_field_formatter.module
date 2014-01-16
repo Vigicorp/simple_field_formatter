@@ -15,6 +15,7 @@ function simple_field_formatter_field_formatter_info_alter(&$info) {
       'custom_strtolower' => '',
       'custom_strtoupper' => '',
       'custom_ucfirst' => '',
+      'custom_ucwords' => '',
       'custom_strip_tags' => '',
       'custom_strip_preserve' => '',
     );
@@ -30,7 +31,7 @@ function simple_field_formatter_field_formatter_settings_summary_alter(&$summary
   $settings = $display['settings'];
   //watchdog('custom-test',print_r($settings,TRUE));
   if (!empty($settings)) {
-    $summary = t('<strong>Link to Entity:</strong> @custom_link_to_entity <br/> <strong>Prefix:</strong> @custom_prefix <br/> <strong>Suffix:</strong> @custom_suffix<br/> <strong>Reverse:</strong> @custom_reverse<br/> <strong>Trim:</strong> @custom_trim<br/> <strong>strtolower:</strong> @custom_strtolower<br/> <strong>strtoupper:</strong> @custom_strtoupper<br/> <strong>ucfirst:</strong> @custom_ucfirst<br/> <strong>StripTags:</strong> @custom_strip_tags', array(
+    $summary = t('<strong>Link to Entity:</strong> @custom_link_to_entity <br/> <strong>Prefix:</strong> @custom_prefix <br/> <strong>Suffix:</strong> @custom_suffix<br/> <strong>Reverse:</strong> @custom_reverse<br/> <strong>Trim:</strong> @custom_trim<br/> <strong>strtolower:</strong> @custom_strtolower<br/> <strong>strtoupper:</strong> @custom_strtoupper<br/> <strong>ucfirst:</strong> @custom_ucfirst<br/> <strong>ucwords:</strong> @custom_ucwords<br/> <strong>StripTags:</strong> @custom_strip_tags', array(
         '@custom_link_to_entity'     => isset($settings['custom_link_to_entity']) ? $settings['custom_link_to_entity'] : '',
         '@custom_prefix'     => isset($settings['custom_prefix']) ? $settings['custom_prefix'] : '',
         '@custom_suffix'  => isset($settings['custom_suffix']) ? $settings['custom_suffix'] : '',
@@ -39,6 +40,7 @@ function simple_field_formatter_field_formatter_settings_summary_alter(&$summary
         '@custom_strtolower'  => isset($settings['custom_strtolower']) ? $settings['custom_strtolower'] : '',
         '@custom_strtoupper'  => isset($settings['custom_strtoupper']) ? $settings['custom_strtoupper'] : '',
         '@custom_ucfirst'  => isset($settings['custom_ucfirst']) ? $settings['custom_ucfirst'] : '',
+        '@custom_ucwords'  => isset($settings['custom_ucwords']) ? $settings['custom_ucwords'] : '',
         '@custom_strip_tags'  => isset($settings['custom_strip_tags']) ? $settings['custom_strip_tags'] : '',
         )); // we use t() for translation and placeholders to guard against attacks
   }
@@ -79,20 +81,16 @@ function simple_field_formatter_formatter_info($field_name, $entity_type, $bundl
  *
  */
 function simple_field_formatter_field_attach_view_alter(&$output, $context) {
-  if (!isset($context['display']['settings']) || !is_array($context['display']['settings'])) {
-    return;
-  }
-  else {
-    $settings = $context['display']['settings'];
-
     foreach (element_children($output) as $field_name) {
       $element = &$output[$field_name];
       //watchdog('formatter',print_r($element,TRUE));
       $instance = field_info_instance($element['#entity_type'], $field_name, $element['#bundle']);
+      $display = isset($instance['display'][$context['view_mode']]) ? $instance['display'][$context['view_mode']] : $instance['display']['default'];
+      $settings = $display['settings'];
       // Get field type.
       $field_type = $instance['widget']['type'];
       // Get formatter settings.
-
+  
       $custom_link = isset($settings['custom_link_to_entity']) ? $settings['custom_link_to_entity'] : NULL;
       $custom_prefix = isset($settings['custom_prefix']) ? $settings['custom_prefix'] : NULL;
       $custom_suffix = isset($settings['custom_suffix']) ? $settings['custom_suffix'] : NULL;
@@ -101,9 +99,10 @@ function simple_field_formatter_field_attach_view_alter(&$output, $context) {
       $custom_strtolower = isset($settings['custom_strtolower']) ? $settings['custom_strtolower'] : NULL;
       $custom_strtoupper = isset($settings['custom_strtoupper']) ? $settings['custom_strtoupper'] : NULL;
       $custom_ucfirst = isset($settings['custom_ucfirst']) ? $settings['custom_ucfirst'] : NULL;
+      $custom_ucwords = isset($settings['custom_ucwords']) ? $settings['custom_ucwords'] : NULL;      
       $custom_strip_tags = isset($settings['custom_strip_tags']) ? $settings['custom_strip_tags'] : NULL;
       $custom_strip_preserve = isset($settings['custom_strip_preserve']) ? $settings['custom_strip_preserve'] : NULL;
-
+      
       foreach ($element['#items'] as $delta => $item) {
         // Get the original value based on the field type.
         switch ($field_type) {
@@ -113,11 +112,14 @@ function simple_field_formatter_field_attach_view_alter(&$output, $context) {
           case 'text_textfield':
             $original_value = $item['safe_value'];
             break;
+          case 'text_textarea_with_summary':
+            $original_value = $item['safe_value'];
+            break;
           default:
             $original_value = NULL;
             break;
         }
-
+  
         if (isset($original_value)) {
           $modified_value = $original_value;
           if ($custom_reverse) {
@@ -135,6 +137,9 @@ function simple_field_formatter_field_attach_view_alter(&$output, $context) {
           if ($custom_ucfirst) {
             $modified_value = ucfirst($modified_value);
           }
+          if ($custom_ucwords) {
+            $modified_value = ucwords($modified_value);
+          }          
           if ($custom_strip_tags) {
             $modified_value = strip_tags($modified_value, $custom_strip_preserve);
           }
@@ -162,7 +167,6 @@ function simple_field_formatter_field_attach_view_alter(&$output, $context) {
         }
       }
     }
-  }
 }
 
 function simple_field_formatter_field_formatter_settings_form_alter(&$settings_form, $context) {
@@ -220,6 +224,12 @@ function simple_field_formatter_field_formatter_settings_form_alter(&$settings_f
     '#title' => t('ucfirst'), // Widget label
     '#description' => t('Converts the first character of a string to uppercase.'), // helper text
     '#default_value' => $settings['custom_ucfirst'], // Get the value if it's already been set
+  );
+  $settings_form['custom_ucwords'] = array(
+      '#type' => 'checkbox', // Use a textbox
+      '#title' => t('ucwords'), // Widget label
+      '#description' => t('Converts the first character of each word in a string to uppercase.'), // helper text
+      '#default_value' => $settings['custom_ucwords'], // Get the value if it's already been set
   );
   $settings_form['custom_strip_tags'] = array(
     '#type' => 'checkbox', // Use a textbox
