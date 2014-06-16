@@ -6,6 +6,11 @@
 function simple_field_formatter_field_formatter_info_alter(&$info) {
   // added to ALL formatters...
   foreach ($info as $formatter_key => &$formatter) {
+    // Added in case a field formatter is not created with primary settings.
+    if (!isset($formatter['settings'])) {
+      $formatter['settings'] = array();
+    }
+
     $formatter['settings'] += array(
       'custom_link_to_entity' => '',
       'custom_prefix' => '', //give a default value for when the form is first loaded
