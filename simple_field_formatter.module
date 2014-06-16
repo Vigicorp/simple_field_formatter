@@ -115,10 +115,22 @@ function simple_field_formatter_field_attach_view_alter(&$output, $context) {
             $original_value = $item['title'];
             break;
           case 'text_textfield':
-            $original_value = $item['safe_value'];
+            if(isset($item['safe_value'])){
+              $original_value = $item['safe_value'];
+            }elseif(isset($item['value'])){
+              $original_value = $item['value'];
+            }else{
+              $original_value = NULL;
+            }
             break;
           case 'text_textarea_with_summary':
-            $original_value = $item['safe_value'];
+            if(isset($item['safe_value'])){
+              $original_value = $item['safe_value'];
+            }elseif(isset($item['value'])){
+              $original_value = $item['value'];
+            }else{
+              $original_value = NULL;
+            }
             break;
           default:
             $original_value = NULL;
