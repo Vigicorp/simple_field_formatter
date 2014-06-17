@@ -11,7 +11,7 @@ function simple_field_formatter_field_formatter_info_alter(&$info) {
       $formatter['settings'] = array();
     }
 
-    $formatter['settings'] += array(
+    $formatter['settings'] = array_merge($formatter['settings'], array(
       'custom_link_to_entity' => '',
       'custom_prefix' => '', //give a default value for when the form is first loaded
       'custom_suffix' => '', //ditto
@@ -23,7 +23,7 @@ function simple_field_formatter_field_formatter_info_alter(&$info) {
       'custom_ucwords' => '',
       'custom_strip_tags' => '',
       'custom_strip_preserve' => '',
-    );
+    ));
   }
 }
 
