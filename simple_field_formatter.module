@@ -1,37 +1,24 @@
 <?php
 
 /**
- * Implements hook_field_formatter_info_alter().
+ * @file
+ * Provide for simple manipulation logic on field formatters in the display.
  */
-function simple_field_formatter_field_formatter_info_alter(&$info) {
-  // added to ALL formatters...
-  foreach ($info as $formatter_key => &$formatter) {
-    $formatter['settings'] += array(
-        'custom_prefix' => '', //give a default value for when the form is first loaded
-        'custom_suffix' => '', //ditto
-        'custom_reverse' => '',
-        'custom_trim' => '',
-        'custom_strtolower' => '',
-        'custom_strtoupper' => '',
-        'custom_ucfirst' => '',
-    );
-  }
-}
+use Drupal\Core\Entity\Entity\EntityViewDisplay;
+use Drupal\Component\Utility\Xss;
 
 /**
  * Implements hook_field_formatter_settings_summary_alter().
  */
-function simple_field_formatter_field_formatter_settings_summary_alter(&$summary, $context) {
-
-  $settings = $context['formatter']->getSettings();
-  // Normalize the settings.
-  $custom_prefix = $settings['custom_prefix'];
-  $custom_suffix = $settings['custom_suffix'];
-  $custom_reverse = $settings['custom_reverse'];
-  $custom_trim = $settings['custom_trim'];
-  $custom_strtolower = $settings['custom_strtolower'];
-  $custom_strtoupper = $settings['custom_strtoupper'];
-  $custom_ucfirst = $settings['custom_ucfirst'];
+function simple_field_formatter_field_formatter_settings_summary_alter(&$summary, $context)
+{
+  $custom_prefix = $context['formatter']->getThirdPartySetting('simple_field_formatter', 'custom_prefix');
+  $custom_suffix = $context['formatter']->getThirdPartySetting('simple_field_formatter', 'custom_suffix');
+  $custom_reverse = $context['formatter']->getThirdPartySetting('simple_field_formatter', 'custom_reverse');
+  $custom_trim = $context['formatter']->getThirdPartySetting('simple_field_formatter', 'custom_trim');
+  $custom_strtolower = $context['formatter']->getThirdPartySetting('simple_field_formatter', 'custom_strtolower');
+  $custom_strtoupper = $context['formatter']->getThirdPartySetting('simple_field_formatter', 'custom_strtoupper');
+  $custom_ucfirst = $context['formatter']->getThirdPartySetting('simple_field_formatter', 'custom_ucfirst');
 
   $summary_items = array();
 
@@ -56,34 +43,46 @@ function simple_field_formatter_field_formatter_settings_summary_alter(&$summary
   if ($custom_ucfirst) {
     $summary_items[] = t('ucfirst: @custom_ucfirst', array('@custom_ucfirst' => $custom_ucfirst));
   }
-  $summary[] = theme('item_list', array('items' => $summary_items, 'title' => 'Custom'));
+  if (!empty($summary_items)) {
+    $item_list = array(
+      '#theme' => 'item_list',
+      '#items' => $summary_items,
+      '#title' => t('Custom'),
+    );
+    $summary[] = render($item_list);
+  }
 }
 
 /**
- * Implements hook_field_attach_view_alter().
+ * Implements hook_preprocess_HOOK() for field templates.
  *
+ * Adds simple custom display logic to the field's value
+ * according to the field formatter settings.
  */
-function simple_field_formatter_field_attach_view_alter(&$output, $context) {
-  $entity_display = entity_get_render_display($context['entity'], $context['view_mode']);
- 	foreach (element_children($output) as $field_name) {
+function simple_field_formatter_preprocess_field(&$variables) {
+  $entity      = $variables['element']['#object'];
+  $field_name  = $variables['element']['#field_name'];
+  $view_mode   = $variables['element']['#view_mode'];
 
- 	  $element = &$output[$field_name];
+  $render_display = EntityViewDisplay::collectRenderDisplay($entity, $view_mode);
+  $field_display = $render_display->getComponent($field_name);
 
-      $component = $entity_display->getComponent($field_name);
-      $settings = $component['settings'];
+  if (isset($field_display['third_party_settings']['simple_field_formatter'])) {
+    $custom_prefix = $field_display['third_party_settings']['simple_field_formatter']['custom_prefix'];
+    $custom_suffix = $field_display['third_party_settings']['simple_field_formatter']['custom_suffix'];
+    // Sanitize the prefix & suffix, allow a few reasonable HTML elements.
+    $custom_prefix = Xss::filter($custom_prefix, array('br', 'hr', 'span', 'img', 'wbr'));
+    $custom_suffix = Xss::filter($custom_suffix, array('br', 'hr', 'span', 'img', 'wbr'));
+    $custom_reverse = $field_display['third_party_settings']['simple_field_formatter']['custom_reverse'];
+    $custom_trim = $field_display['third_party_settings']['simple_field_formatter']['custom_trim'];
+    $custom_strtolower = $field_display['third_party_settings']['simple_field_formatter']['custom_strtolower'];
+    $custom_strtoupper = $field_display['third_party_settings']['simple_field_formatter']['custom_strtoupper'];
+    $custom_ucfirst = $field_display['third_party_settings']['simple_field_formatter']['custom_ucfirst'];
 
- 	  if (!empty($settings)) {
- 	    $custom_prefix = $settings['custom_prefix'];
- 	    $custom_suffix = $settings['custom_suffix'];
- 	    $custom_reverse = $settings['custom_reverse'];
- 	    $custom_trim = $settings['custom_trim'];
- 	    $custom_strtolower = $settings['custom_strtolower'];
- 	    $custom_strtoupper = $settings['custom_strtoupper'];
- 	    $custom_ucfirst = $settings['custom_ucfirst'];
- 	  }
- 	  foreach ($element['#items'] as $delta => $item) {
- 	    if(isset($item['processed'])){
- 	      $original_value = $item['processed']; // Getting the actual value
+    foreach ($variables['items'] as $delta => &$item) {
+      dsm($item);
+ 	    if(isset($item['content']['#text'])){
+ 	      $original_value = $item['content']['#text']; // Getting the actual value
  	      $modified_value = $original_value;
  	      if($custom_reverse){
  	        $modified_value = strrev($modified_value);
@@ -101,64 +100,67 @@ function simple_field_formatter_field_attach_view_alter(&$output, $context) {
  	        $modified_value = ucfirst($modified_value);
  	      }
  	      if($modified_value != $original_value){
- 	        $element[$delta]['#markup'] = $modified_value;
+          $item['content']['#text'] = $modified_value;
  	      }
  	    }
  	    if (!empty($custom_suffix)) {
- 	      $element[$delta]['#suffix'] = $custom_suffix;
+        $item['content']['#suffix'] = $custom_suffix;
  	    }
  	    if (!empty($custom_prefix)) {
- 	      $element[$delta]['#prefix'] = $custom_prefix;
+        $item['content']['#prefix'] = $custom_prefix;
  	    }
- 	    //$modified_value = $custom_prefix . $original_value . $custom_suffix;
- 	    //$element[$delta]['#markup'] = $modified_value;
  	  }
 
  	}
 }
 
-function simple_field_formatter_field_formatter_settings_form_alter(&$element, &$form_state, $context) {
-
+  /**
+   * Implements hook_field_formatter_third_party_settings_form().
+   *
+   * Adds a 'class' textfield to all formatters.
+   */
+function simple_field_formatter_field_formatter_third_party_settings_form(\Drupal\Core\Field\FormatterInterface $plugin, \Drupal\Core\Field\FieldDefinitionInterface $field_definition, $view_mode, $form, $form_state) {
   $element['custom_prefix'] = array(
       '#type'           => 'textfield',                        // Use a textbox
       '#title'          => t('Prefix'),                      // Widget label
       '#description'    => t('Prefix will display before the content.'),  // helper text
-      '#default_value'  => $context['formatter']->getSetting('custom_prefix'),               // Get the value if it's already been set
+      '#default_value'  => $plugin->getThirdPartySetting('simple_field_formatter', 'custom_prefix'),               // Get the value if it's already been set
   );
   $element['custom_suffix'] = array(
       '#type'           => 'textfield',                        // Use a textbox
       '#title'          => t('Suffix'),                      // Widget label
       '#description'    => t('Suffix will display after the content.'),  // helper text
-      '#default_value'  => $context['formatter']->getSetting('custom_suffix'),               // Get the value if it's already been set
+      '#default_value'  => $plugin->getThirdPartySetting('simple_field_formatter', 'custom_suffix'),               // Get the value if it's already been set
   );
   $element['custom_reverse'] = array(
       '#type'           => 'checkbox',                        // Use a textbox
       '#title'          => t('Reverse'),                      // Widget label
       '#description'    => t('Reverses the Content.'),  // helper text
-      '#default_value'  => $context['formatter']->getSetting('custom_reverse'),               // Get the value if it's already been set
+      '#default_value'  => $plugin->getThirdPartySetting('simple_field_formatter', 'custom_reverse'),               // Get the value if it's already been set
   );
   $element['custom_trim'] = array(
       '#type'           => 'checkbox',                        // Use a textbox
       '#title'          => t('Trim'),                      // Widget label
       '#description'    => t('Removes Leading & trailing spaces from the Content.'),  // helper text
-      '#default_value'  => $context['formatter']->getSetting('custom_trim'),               // Get the value if it's already been set
+      '#default_value'  => $plugin->getThirdPartySetting('simple_field_formatter', 'custom_trim'),               // Get the value if it's already been set
   );
   $element['custom_strtolower'] = array(
       '#type'           => 'checkbox',                        // Use a textbox
       '#title'          => t('strtolower'),                      // Widget label
       '#description'    => t('Converts a string to lowercase letters.'),  // helper text
-      '#default_value'  => $context['formatter']->getSetting('custom_strtolower'),               // Get the value if it's already been set
+      '#default_value'  => $plugin->getThirdPartySetting('simple_field_formatter', 'custom_strtolower'),               // Get the value if it's already been set
   );
   $element['custom_strtoupper'] = array(
       '#type'           => 'checkbox',                        // Use a textbox
       '#title'          => t('strtoupper'),                      // Widget label
       '#description'    => t('Converts a string to uppercase letters.'),  // helper text
-      '#default_value'  => $context['formatter']->getSetting('custom_strtoupper'),               // Get the value if it's already been set
+      '#default_value'  => $plugin->getThirdPartySetting('simple_field_formatter', 'custom_strtoupper'),               // Get the value if it's already been set
   );
   $element['custom_ucfirst'] = array(
       '#type'           => 'checkbox',                        // Use a textbox
       '#title'          => t('ucfirst'),                      // Widget label
       '#description'    => t('Converts the first character of a string to uppercase.'),  // helper text
-      '#default_value'  => $context['formatter']->getSetting('custom_ucfirst'),               // Get the value if it's already been set
+      '#default_value'  => $plugin->getThirdPartySetting('simple_field_formatter', 'custom_ucfirst'),               // Get the value if it's already been set
   );
+  return $element;
 }
