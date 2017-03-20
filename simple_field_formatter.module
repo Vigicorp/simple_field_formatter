@@ -80,7 +80,6 @@ function simple_field_formatter_preprocess_field(&$variables) {
     $custom_ucfirst = $field_display['third_party_settings']['simple_field_formatter']['custom_ucfirst'];
 
     foreach ($variables['items'] as $delta => &$item) {
-      dsm($item);
  	    if(isset($item['content']['#text'])){
  	      $original_value = $item['content']['#text']; // Getting the actual value
  	      $modified_value = $original_value;
