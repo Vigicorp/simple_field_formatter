@@ -34,24 +34,30 @@ function simple_field_formatter_field_formatter_settings_summary_alter(&$summary
 
   $display = $context['instance']['display'][$context['view_mode']];
   $settings = $display['settings'];
-  //watchdog('custom-test',print_r($settings,TRUE));
-  if (!empty($settings)) {
-    $summary = t('<strong>Link to Entity:</strong> @custom_link_to_entity <br/> <strong>Prefix:</strong> @custom_prefix <br/> <strong>Suffix:</strong> @custom_suffix<br/> <strong>Reverse:</strong> @custom_reverse<br/> <strong>Trim:</strong> @custom_trim<br/> <strong>strtolower:</strong> @custom_strtolower<br/> <strong>strtoupper:</strong> @custom_strtoupper<br/> <strong>ucfirst:</strong> @custom_ucfirst<br/> <strong>ucwords:</strong> @custom_ucwords<br/> <strong>StripTags:</strong> @custom_strip_tags', array(
-        '@custom_link_to_entity'     => isset($settings['custom_link_to_entity']) ? $settings['custom_link_to_entity'] : '',
-        '@custom_prefix'     => isset($settings['custom_prefix']) ? $settings['custom_prefix'] : '',
-        '@custom_suffix'  => isset($settings['custom_suffix']) ? $settings['custom_suffix'] : '',
-        '@custom_reverse'  => isset($settings['custom_reverse']) ? $settings['custom_reverse'] : '',
-        '@custom_trim'  => isset($settings['custom_trim']) ? $settings['custom_trim'] : '',
-        '@custom_strtolower'  => isset($settings['custom_strtolower']) ? $settings['custom_strtolower'] : '',
-        '@custom_strtoupper'  => isset($settings['custom_strtoupper']) ? $settings['custom_strtoupper'] : '',
-        '@custom_ucfirst'  => isset($settings['custom_ucfirst']) ? $settings['custom_ucfirst'] : '',
-        '@custom_ucwords'  => isset($settings['custom_ucwords']) ? $settings['custom_ucwords'] : '',
-        '@custom_strip_tags'  => isset($settings['custom_strip_tags']) ? $settings['custom_strip_tags'] : '',
-        )); // we use t() for translation and placeholders to guard against attacks
+
+  if (empty($settings)) {
+    return;
   }
-  else {
-    $summary .= '<br />';
+
+  // Build up all our settings in separate translatable strings.
+  $items[] = !empty($settings['custom_link_to_entity']) ? t('Link to Entity: @param', array('@param' => $settings['custom_link_to_entity'])) : NULL;
+  $items[] = !empty($settings['custom_prefix']) ? t('Prefix: @param', array('@param' => $settings['custom_prefix'])) : NULL;
+  $items[] = !empty($settings['custom_suffix']) ? t('Suffix: @param', array('@param' => $settings['custom_suffix'])) : NULL;
+  $items[] = !empty($settings['custom_reverse']) ? t('Reverse: @param', array('@param' => $settings['custom_reverse'])) : NULL;
+  $items[] = !empty($settings['custom_trim']) ? t('Trim: @param', array('@param' => $settings['custom_trim'])) : NULL;
+  $items[] = !empty($settings['custom_strtolower']) ? t('Lowercase: @param', array('@param' => $settings['custom_strtolower'])) : NULL;
+  $items[] = !empty($settings['custom_strtoupper']) ? t('Upercase: @param', array('@param' => $settings['custom_strtoupper'])) : NULL;
+  $items[] = !empty($settings['custom_ucfirst']) ? t('Uppercase First: @param', array('@param' => $settings['custom_ucfirst'])) : NULL;
+  $items[] = !empty($settings['custom_ucwords']) ? t('Uppercase Words: @param', array('@param' => $settings['custom_ucwords'])) : NULL;
+  $items[] = !empty($settings['custom_strip_tags']) ? t('Strip Tags: @param', array('@param' => $settings['custom_strip_tags'])) : NULL;
+
+  // Tack any that are set onto the display.
+  foreach ($items as $item) {
+    if (!is_null($item)) {
+      $summary .= '<br />' . $item;
+    }
   }
+
 }
 
 /**
@@ -96,7 +102,7 @@ function simple_field_formatter_field_attach_view_alter(&$output, $context) {
         // Get field type.
         $field_type = $instance['widget']['type'];
         // Get formatter settings.
-    
+
         $custom_link = isset($settings['custom_link_to_entity']) ? $settings['custom_link_to_entity'] : NULL;
         $custom_prefix = isset($settings['custom_prefix']) ? $settings['custom_prefix'] : NULL;
         $custom_suffix = isset($settings['custom_suffix']) ? $settings['custom_suffix'] : NULL;
@@ -105,10 +111,10 @@ function simple_field_formatter_field_attach_view_alter(&$output, $context) {
         $custom_strtolower = isset($settings['custom_strtolower']) ? $settings['custom_strtolower'] : NULL;
         $custom_strtoupper = isset($settings['custom_strtoupper']) ? $settings['custom_strtoupper'] : NULL;
         $custom_ucfirst = isset($settings['custom_ucfirst']) ? $settings['custom_ucfirst'] : NULL;
-        $custom_ucwords = isset($settings['custom_ucwords']) ? $settings['custom_ucwords'] : NULL;      
+        $custom_ucwords = isset($settings['custom_ucwords']) ? $settings['custom_ucwords'] : NULL;
         $custom_strip_tags = isset($settings['custom_strip_tags']) ? $settings['custom_strip_tags'] : NULL;
         $custom_strip_preserve = isset($settings['custom_strip_preserve']) ? $settings['custom_strip_preserve'] : NULL;
-        
+
         foreach ($element['#items'] as $delta => $item) {
           // Get the original value based on the field type.
           switch ($field_type) {
@@ -139,7 +145,7 @@ function simple_field_formatter_field_attach_view_alter(&$output, $context) {
               $original_value = NULL;
               break;
           }
-    
+
           if (isset($original_value)) {
             $modified_value = $original_value;
             if ($custom_reverse) {
@@ -159,7 +165,7 @@ function simple_field_formatter_field_attach_view_alter(&$output, $context) {
             }
             if ($custom_ucwords) {
               $modified_value = ucwords($modified_value);
-            }          
+            }
             if ($custom_strip_tags) {
               $modified_value = strip_tags($modified_value, $custom_strip_preserve);
             }
